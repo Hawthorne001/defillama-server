@@ -37,7 +37,7 @@
     "webpack": "^5.27.2"
   },
   "dependencies": {
-    "@defillama/sdk": "^2.3.32",
+    "@defillama/sdk": "^2.3.126",
     "@ethersproject/bignumber": "^5.5.0",
     "@sentry/serverless": "6.2.3",
     "@sentry/tracing": "6.2.3",
