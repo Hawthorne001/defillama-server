@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@sentry/serverless": "6.2.3",
-    "@sentry/tracing": "6.2.3",
+    "@sentry/tracing": "6.19.7",
     "dotenv": "^8.6.0",
     "node-fetch": "^2.6.1",
     "serverless-webpack": "^5.6.0"
