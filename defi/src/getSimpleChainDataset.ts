@@ -5,7 +5,7 @@ import { formatTimestampAsDate, getClosestDayStartTimestamp, secondsInHour } fro
 import { buildRedirectR2, getR2, storeDatasetR2 } from "./utils/r2";
 
 export async function getSimpleChainDatasetInternal(rawChain: string, params: any = {}) {
-  const categorySelected = params.category === undefined ? undefined : decodeURI(params.category);
+  const categorySelected = params.category === undefined ? undefined : decodeURI(params.category).replace("_", " ");
   const globalChain = rawChain === "All" ? null : getChainDisplayName(rawChain.toLowerCase(), true);
 
   const sumDailyTvls = {} as {
@@ -131,10 +131,12 @@ export async function getSimpleChainDatasetInternal(rawChain: string, params: an
     // convert data to csv format
     const csv = grid.map((r) => r.join(",")).join("\n");
 
-    const filename = `simpleDataset/chain-dataset-${rawChain}-${Object.entries(params).map(t => `${t[0]}=${t[1]}`).sort().join("&")}.csv`;
+    let filename = `simpleDataset/chain-dataset-${rawChain}-${Object.entries(params).map(t => `${t[0]}=${t[1]}`).sort().join("&")}.csv`;
 
     if (!params.readFromPG)
       await storeDatasetR2(filename, csv);
+    else 
+      filename = `chain-dataset-${rawChain}.csv`
 
     return { filename, csv }
   }

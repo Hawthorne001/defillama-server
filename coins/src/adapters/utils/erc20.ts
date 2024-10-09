@@ -17,6 +17,12 @@ export async function getTokenInfo(
 ): Promise<DbTokenInfos> {
   const { withSupply = false, timestamp } = params;
   targets = targets.map((i) => i.toLowerCase());
+  if (chain === 'solana') {
+    console.error('Solana not supported')
+    const decimals = targets.map(() => ({ output: 0, success: true }))
+    const symbols = targets.map(() => ({ output: '-', success: true }))
+    return { decimals, symbols, } as any
+  }
 
   const api = new sdk.ChainApi({ chain, block, timestamp });
   const [decimals, symbols] = await Promise.all([
@@ -38,6 +44,25 @@ export async function getTokenInfo(
     symbols,
   };
 }
+
+export async function getTokenInfoMap(chain: string = "ethereum", targets: string[]) {
+  const res = await getTokenInfo(chain, targets, undefined);
+  const map: {
+    [address: string]: {
+      symbol: string;
+      decimals: number;
+    };
+  } = {};
+  res.decimals.forEach((d, i) => {
+    if (!res.symbols[i].success || !d.success) return;
+    map[targets[i]] = {
+      symbol: res.symbols[i].output,
+      decimals: d.output,
+    };
+  });
+  return map;
+}
+
 interface Lp {
   address: string;
   primaryUnderlying: string;
@@ -50,8 +75,15 @@ export async function getLPInfo(
   block: number | undefined,
 ) {
   const api = new sdk.ChainApi({ chain, block });
+
+  const supplies = await api.multiCall({
+    abi: "erc20:totalSupply",
+    calls: targets.map((i: any) => i.address),
+    withMetadata: true,
+    permitFailure: true,
+  });
+
   const [
-    supplies,
     lpDecimals,
     lpSymbols,
     underlyingDecimalAs,
@@ -59,11 +91,6 @@ export async function getLPInfo(
     symbolAs,
     symbolBs,
   ] = await Promise.all([
-    api.multiCall({
-      abi: "erc20:totalSupply",
-      calls: targets.map((i: any) => i.address),
-      withMetadata: true,
-    }),
     _getCachedData({
       api,
       targets: targets.map((i: any) => i.address),
@@ -95,6 +122,7 @@ export async function getLPInfo(
       subkey: "symbol",
     }),
   ]);
+
   return {
     supplies,
     lpDecimals,

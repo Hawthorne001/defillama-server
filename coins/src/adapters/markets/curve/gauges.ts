@@ -3,9 +3,9 @@ import { multiCall, call } from "@defillama/sdk/build/abi/index";
 import getBlock from "../../utils/block";
 import {
   addToDBWritesList,
-  getTokenAndRedirectData,
+  getTokenAndRedirectDataMap,
 } from "../../utils/database";
-import { Write, CoinData } from "../../utils/dbInterfaces";
+import { Write } from "../../utils/dbInterfaces";
 import { getTokenInfo } from "../../utils/erc20";
 
 async function mainGauges(chain: any, block: number | undefined) {
@@ -109,20 +109,18 @@ export default async function getTokenPrices(
     block,
   );
 
-  const tokenAndRedirectData = await getTokenAndRedirectData(
+  const tokenAndRedirectData = await getTokenAndRedirectDataMap(
     successfulCallResults.map((c: any) => c.lp.toLowerCase()),
     chain,
     timestamp,
   );
 
   successfulCallResults.map((c: any, i: number) => {
-    const dbEntries = tokenAndRedirectData.filter(
-      (e: CoinData) => e.address == c.lp.toLowerCase(),
-    );
+    const dbEntry = tokenAndRedirectData[c.lp.toLowerCase()]
     if (
       tokenInfos.symbols[i].output == null ||
       tokenInfos.decimals[i].output == null ||
-      dbEntries.length == 0
+      dbEntry == null
     )
       return;
     addToDBWritesList(
@@ -135,7 +133,7 @@ export default async function getTokenPrices(
       timestamp,
       "curve-gauges",
       0.8,
-      `asset#${chain}:${c.lp.toLowerCase()}`,
+      dbEntry.redirect ?? `asset#${chain}:${c.lp.toLowerCase()}`,
     );
   });
 
